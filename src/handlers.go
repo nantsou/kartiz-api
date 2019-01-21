@@ -2,22 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"kartiz/utils"
 	"net/http"
 )
 
 func (s *server) getHealthCheckHandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewEncoder(w).Encode(map[string]string{"status": "alive"}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		w.WriteHeader(http.StatusOK)
+		output := utils.BuildOutput(nil, nil, http.StatusOK)
+		_ = json.NewEncoder(w).Encode(output)
 	}
 }
 
 func (s *server) getNotFoundHandleFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(map[string]string{"status": "not found"}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		output := utils.BuildOutput(nil, errors.New("resource not found"), http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(output)
 	}
 }

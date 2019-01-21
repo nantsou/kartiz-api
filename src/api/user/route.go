@@ -3,16 +3,20 @@ package user
 import (
 	"github.com/gorilla/mux"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"kartiz/auth"
 )
 
-func ApplyUserRoutes(router *mux.Router, db *mongo.Database) *mux.Router {
+func ApplyRoutes(router *mux.Router, db *mongo.Database, auth *auth.Auth) {
 	c := db.Collection("user")
-	uc := userController{&userService{c}}
+	h := handler{service: &service{c}, auth: auth}
+	authSub := router.PathPrefix("/auth").Subrouter()
+	authSub.HandleFunc("/login", h.getLoginHandler()).Methods("POST")
+	authSub.Handle("/logout",auth.AuthMiddleWare(h.getLogoutHandler())).Methods("GET")
 	sub := router.PathPrefix("/users").Subrouter()
-	sub.HandleFunc("", uc.getAllUsersHandler()).Methods("GET")
-	sub.HandleFunc("", uc.createUserHandler()).Methods("POST")
-	sub.HandleFunc("/{id}", uc.getUserByIdHandler()).Methods("GET")
-	sub.HandleFunc("/{id}", uc.updateUserByIdHandler()).Methods("PUT")
-	sub.HandleFunc("/{id}", uc.deleteUserByIdHandler()).Methods("DELETE")
-	return router
+	sub.Use(h.auth.AuthMiddleWare)
+	sub.HandleFunc("", h.getAllUsersHandler()).Methods("GET")
+	sub.HandleFunc("", h.createUserHandler()).Methods("POST")
+	sub.HandleFunc("/{id}", h.getUserByIdHandler()).Methods("GET")
+	sub.HandleFunc("/{id}", h.updateUserByIdHandler()).Methods("PUT")
+	sub.HandleFunc("/{id}", h.deleteUserByIdHandler()).Methods("DELETE")
 }

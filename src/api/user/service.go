@@ -12,33 +12,33 @@ import (
 	"time"
 )
 
-type userService struct {
+type service struct {
 	c *mongo.Collection
 }
 
-func (us *userService) find() ([]profile, error) {
+func (s *service) find() ([]User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
-	var profileArray []profile
-	cur, err := us.c.Find(ctx, nil)
+	var users []User
+	cur, err := s.c.Find(ctx, nil)
 
 	// allocate users into array
 	for cur.Next(nil) {
-		var p profile
-		err = cur.Decode(&p); if err != nil {
+		user := User{}
+		err = cur.Decode(&user); if err != nil {
 			log.Fatal("Decode error ", err)
 			return nil, err
 		}
-		profileArray = append(profileArray, p)
+		users = append(users, user)
 	}
 
 	// close db cursor
 	err = cur.Close(nil); if err != nil {
 		return nil, err
 	}
-	return profileArray, nil
+	return users, nil
 }
 
-func (us *userService) create(rawData *json.Decoder) (*profile, error) {
+func (s *service) create(rawData *json.Decoder) (*User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	var data map[string]interface{}
 	err := rawData.Decode(&data); if err != nil {
@@ -57,32 +57,29 @@ func (us *userService) create(rawData *json.Decoder) (*profile, error) {
 	} else {
 		return nil, errors.New("password is necessary")
 	}
-	res, err := us.c.InsertOne(ctx, &user); if err != nil {
+	res, err := s.c.InsertOne(ctx, &user); if err != nil {
 		return nil, err
 	}
-	var p profile
-	if err := us.c.FindOne(ctx, bson.D{{Key: "_id", Value: res.InsertedID}}).Decode(&p); err != nil {
-		return nil, err
-	}
-	return &p, nil
+	user.Id = res.InsertedID.(primitive.ObjectID)
+	return &user, nil
 }
 
-func (us *userService) get(objectId primitive.ObjectID) (*profile, error) {
+func (s *service) get(objectId primitive.ObjectID) (*User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
-	var p profile
-	if err := us.c.FindOne(ctx, bson.D{{"_id",objectId}}).Decode(&p); err != nil {
+	var user User
+	if err := s.c.FindOne(ctx, bson.D{{"_id",objectId}}).Decode(&user); err != nil {
 		return nil, err
 	}
-	return &p, nil
+	return &user, nil
 }
 
-func (us *userService) update(objectId primitive.ObjectID, rawData *json.Decoder) (*profile, error) {
+func (s *service) update(objectId primitive.ObjectID, rawData *json.Decoder) (*User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	filter := bson.D{{"_id", objectId}}
 	var after = options.ReturnDocument(1)
 	option := options.FindOneAndUpdateOptions{ReturnDocument: &after}
 	var user User
-	if err := us.c.FindOne(ctx, filter).Decode(&user); err != nil {
+	if err := s.c.FindOne(ctx, filter).Decode(&user); err != nil {
 		return nil, err
 	}
 
@@ -97,19 +94,45 @@ func (us *userService) update(objectId primitive.ObjectID, rawData *json.Decoder
 	if val, ok := data["password"]; ok {
 		user.SetPassWord(val.(string))
 	}
-	var p profile
-	if err := us.c.FindOneAndUpdate(ctx, filter, bson.D{{"$set", &user}}, &option).Decode(&p); err != nil {
+
+	if err := s.c.FindOneAndUpdate(ctx, filter, bson.D{{"$set", &user}}, &option).Decode(&user); err != nil {
 		log.Println(err.Error())
 		return nil, err
 	}
-	return &p, nil
+	return &user, nil
 }
 
-func (us *userService) delete(objectId primitive.ObjectID) error {
+func (s *service) delete(objectId primitive.ObjectID) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 
-	if res := us.c.FindOneAndDelete(ctx, bson.D{{Key: "_id", Value: objectId}}); res.Err() != nil {
+	if res := s.c.FindOneAndDelete(ctx, bson.D{{Key: "_id", Value: objectId}}); res.Err() != nil {
 		return res.Err()
 	}
 	return nil
+}
+
+func (s *service) login(decoder *json.Decoder) (*User, error) {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	var data map[string]interface{}
+	err := decoder.Decode(&data); if err != nil {
+		return nil, err
+	}
+	email, ok := data["email"]; if !ok {
+		return nil, errors.New("email is necessary")
+	}
+	password, ok := data["password"]; if !ok {
+		return nil, errors.New("password is necessary")
+	}
+	var user User
+	if err := s.c.FindOne(ctx, bson.D{{"email",email}}).Decode(&user); err != nil {
+		return nil, err
+	}
+	if !user.VerifyPassWord(password.(string)) {
+		return nil, errors.New("email or password is not correct")
+	}
+	return &user, nil
+}
+
+func (s *service) logout() {
+
 }

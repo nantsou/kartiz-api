@@ -16,7 +16,6 @@ RUN cd /go/src && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o kartiz
 
 # final stage
 FROM centurylink/ca-certs
-COPY --from=build-env /go/src/conf.json /
 COPY --from=build-env /go/src/kartiz /
 ENTRYPOINT ["/kartiz"]
 EXPOSE 8080
