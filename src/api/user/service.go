@@ -16,10 +16,10 @@ type service struct {
 	c *mongo.Collection
 }
 
-func (s *service) find() ([]User, error) {
+func (s *service) find(filter interface{}) ([]User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	var users []User
-	cur, err := s.c.Find(ctx, nil)
+	cur, err := s.c.Find(ctx, filter)
 
 	// allocate users into array
 	for cur.Next(nil) {
@@ -131,8 +131,4 @@ func (s *service) login(decoder *json.Decoder) (*User, error) {
 		return nil, errors.New("email or password is not correct")
 	}
 	return &user, nil
-}
-
-func (s *service) logout() {
-
 }
