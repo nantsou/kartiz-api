@@ -6,14 +6,6 @@ import (
     "net/url"
 )
 
-func BuildOutput(data interface{}, err error, statusCode int) map[string]interface{} {
-    output := map[string]interface{}{"data": data, "error": nil}
-    if err != nil {
-        output["error"] = map[string]interface{}{"message": err.Error(), "statusCode": statusCode}
-    }
-    return output
-}
-
 func BuildFilter(queries url.Values) bson.D {
     filter := bson.D{}
     for key, value := range queries {
