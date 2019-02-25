@@ -22,17 +22,22 @@ type server struct {
     router *mux.Router
 }
 
-func (s *server) setConfig() {
+func getConfig() map[string]interface{} {
+    var config map[string]interface{}
+
     file, _ := os.Open("config.json")
     defer closeFile(file)
-    if err := json.NewDecoder(file).Decode(&s.config); err != nil {
+
+    if err := json.NewDecoder(file).Decode(&config); err != nil {
         log.Fatal(err)
     }
+
+    return config
 }
 
-func (s *server) setDatabase() {
-    host := s.config["mongo"].(map[string]interface{})["host"].(string)
-    port := s.config["mongo"].(map[string]interface{})["port"].(string)
+func (s *server) setDatabase(config map[string]interface{}) {
+    host := config["host"].(string)
+    port := config["port"].(string)
     mongoUrl := fmt.Sprintf("mongodb://%s:%s", host, port)
     log.Println(mongoUrl)
 
@@ -48,9 +53,9 @@ func (s *server) setDatabase() {
 
 }
 
-func (s *server) setAuth() {
+func (s *server) setAuth(config map[string]interface{}) {
     s.auth = &auth.Auth{}
-    s.auth.SetConfig(s.config["auth"].(map[string]interface{}))
+    s.auth.SetConfig(config)
     s.auth.SetDB(s.db.Collection("blacklist"))
 }
 
@@ -72,18 +77,18 @@ func closeFile(f *os.File) {
 }
 
 func main() {
+    // get configure
+    config := getConfig()
+
     // create server object.
     s := server{}
 
-    // set configure to server
-    s.setConfig()
-
     // set database
-    s.setDatabase()
+    s.setDatabase(config["db"].(map[string]interface{}))
     defer closeDB(s.db.Client())
 
     // set auth
-    s.setAuth()
+    s.setAuth(config["auth"].(map[string]interface{}))
 
     // set routes
     s.setRoutes()
