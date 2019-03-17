@@ -5,8 +5,8 @@ import (
     "errors"
     "fmt"
     "github.com/dgrijalva/jwt-go"
-    "github.com/mongodb/mongo-go-driver/bson"
-    "github.com/mongodb/mongo-go-driver/bson/primitive"
+    "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
     "time"
 )
 
@@ -22,7 +22,7 @@ func (auth *Auth) buildClaims(payload map[string]interface{}) jwt.Claims {
 
 func (auth *Auth) checkBlackList(tokenString string) error {
     ctx, _ := context.WithTimeout(context.Background(), time.Second)
-    cnt, _ := auth.db.Count(ctx, bson.D{{"token", tokenString}})
+    cnt, _ := auth.db.CountDocuments(ctx, bson.D{{"token", tokenString}})
     if cnt > 0 {
         return errors.New(fmt.Sprintf("token: %s is already invalidated", tokenString))
     }

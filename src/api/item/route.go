@@ -2,7 +2,7 @@ package item
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 	"kartiz/auth"
 )
 
