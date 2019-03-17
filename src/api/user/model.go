@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/pbkdf2"
 )
 

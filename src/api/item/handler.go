@@ -3,7 +3,7 @@ package item
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
     "net/http"
 
 	"kartiz/utils"

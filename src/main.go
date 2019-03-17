@@ -4,13 +4,14 @@ import (
     "context"
     "encoding/json"
     "fmt"
+    "go.mongodb.org/mongo-driver/mongo/options"
     "log"
     "net/http"
     "os"
     "time"
 
     "github.com/gorilla/mux"
-    "github.com/mongodb/mongo-go-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo"
 
     "kartiz/auth"
 )
@@ -38,10 +39,10 @@ func getConfig() map[string]interface{} {
 func (s *server) setDatabase(config map[string]interface{}) {
     host := config["host"].(string)
     port := config["port"].(string)
-    mongoUrl := fmt.Sprintf("mongodb://%s:%s", host, port)
-    log.Println(mongoUrl)
+    mongoUri := fmt.Sprintf("mongodb://%s:%s", host, port)
+    log.Println(mongoUri)
 
-    client, err := mongo.NewClient(mongoUrl); if err != nil {
+    client, err := mongo.NewClient(options.Client().ApplyURI(mongoUri)); if err != nil {
         log.Fatal(err)
     }
 
