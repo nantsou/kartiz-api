@@ -10,6 +10,7 @@ go:
 env:
   global:
     - GO111MODULE=on
+    - GIN_MODE=release
 
 before_install: cd ${TRAVIS_BUILD_DIR}/src
 
