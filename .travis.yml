@@ -1,0 +1,20 @@
+language: go
+
+cache:
+  directories:
+    - $GOPATH/pkg/mod
+
+go:
+  - 1.14.x
+
+env:
+  global:
+    - GO111MODULE=on
+
+before_install: cd ${TRAVIS_BUILD_DIR}/src
+
+install:
+  - go mod download
+
+script:
+  - go test -v ./...
